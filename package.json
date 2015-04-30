@@ -1,0 +1,36 @@
+{
+  "name": "stash-auth",
+  "version": "1.0.0",
+  "description": "Authorize with Atlassian Stash",
+  "keywords": [
+    "atlassian",
+    "stash",
+    "oauth",
+    "auth",
+    "authorize",
+    "connect"
+  ],
+  "author": {
+    "name": "Isaiah Odhner",
+    "url": "http://1j01.github.io/"
+  },
+  "license": "MIT",
+  "homepage": "http://github.com/1j01/stash-auth/",
+  "bugs": {
+    "url": "https://github.com/1j01/stash-auth/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/1j01/stash-auth.git"
+  },
+  "main": "./lib/stash-auth.js",
+  "devDependencies": {
+    "coffee-script": "~1.9.0"
+  },
+  "dependencies": {
+    "oauth": "git+https://github.com/sladey/node-oauth.git#5305d9851109a9014d06cb81faad57ebde841ff9"
+  },
+  "scripts": {
+    "prepublish": "coffee -c -o lib/ stash-auth.coffee"
+  }
+}
