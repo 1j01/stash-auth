@@ -3,6 +3,16 @@ qs = require "querystring"
 {join} = require "path"
 {OAuth} = require "oauth"
 
+handleError = (err, next)->
+	# https://github.com/ciaranj/node-oauth/issues/250
+	if typeof err is "object" and not (err instanceof Error)
+		error = new Error JSON.stringify err
+		error[k] = v for k, v of err
+		try error[k] = v for k, v of qs.parse err.data
+		next error
+	else
+		next err
+
 module.exports = class StashAuth
 	constructor: (
 		@API_URL
@@ -28,6 +38,7 @@ module.exports = class StashAuth
 			)
 
 	auth: (req, res, next)=>
+		
 		req.session.stashAuthReturnURL = req.originalUrl
 		if req.session.oauthAccessToken
 			
@@ -47,12 +58,10 @@ module.exports = class StashAuth
 			next()
 		else
 			@consumer.getOAuthRequestToken (err, oauthToken, oauthTokenSecret, results)=>
-				if err
-					next err
-				else
-					req.session.oauthRequestToken = oauthToken
-					req.session.oauthRequestTokenSecret = oauthTokenSecret
-					res.redirect "#{@userAuthorizationURL}?oauth_token=#{oauthToken}"
+				return handleError err, next if err
+				req.session.oauthRequestToken = oauthToken
+				req.session.oauthRequestTokenSecret = oauthTokenSecret
+				res.redirect "#{@userAuthorizationURL}?oauth_token=#{oauthToken}"
 	
 	authCallback: (req, res, next)=>
 		@consumer.getOAuthAccessToken(
@@ -60,10 +69,8 @@ module.exports = class StashAuth
 			req.session.oauthRequestTokenSecret
 			req.query.oauth_verifier,
 			(err, oauthAccessToken, oauthAccessTokenSecret, results)=>
-				if err
-					next err
-				else
-					req.session.oauthAccessToken = oauthAccessToken
-					req.session.oauthAccessTokenSecret = oauthAccessTokenSecret
-					res.redirect req.session.stashAuthReturnURL
+				return handleError err, next if err
+				req.session.oauthAccessToken = oauthAccessToken
+				req.session.oauthAccessTokenSecret = oauthAccessTokenSecret
+				res.redirect req.session.stashAuthReturnURL
 		)
