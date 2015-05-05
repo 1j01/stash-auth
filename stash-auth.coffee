@@ -6,7 +6,7 @@ qs = require "querystring"
 module.exports = class StashAuth
 	constructor: (
 		@API_URL
-		@CONSUMER_KEY
+		CONSUMER_KEY
 		privateKeyData
 		fullCallbackURL
 	)->
@@ -18,7 +18,7 @@ module.exports = class StashAuth
 			new OAuth(
 				@requestTokenURL
 				@accessTokenURL
-				@CONSUMER_KEY
+				CONSUMER_KEY
 				""
 				"1.0"
 				fullCallbackURL
@@ -48,11 +48,7 @@ module.exports = class StashAuth
 		else
 			@consumer.getOAuthRequestToken (err, oauthToken, oauthTokenSecret, results)=>
 				if err
-					{oauth_problem, oauth_problem_advice} = qs.parse err.data
-					res.send "
-						<h3>Error getting OAuth request token: #{oauth_problem}</h3>
-						<p>#{oauth_problem_advice}</p>
-					"
+					next err
 				else
 					req.session.oauthRequestToken = oauthToken
 					req.session.oauthRequestTokenSecret = oauthTokenSecret
@@ -65,11 +61,7 @@ module.exports = class StashAuth
 			req.query.oauth_verifier,
 			(err, oauthAccessToken, oauthAccessTokenSecret, results)=>
 				if err
-					{oauth_problem, oauth_problem_advice} = qs.parse err.data
-					res.send "
-						<h3>Error getting OAuth access token: #{oauth_problem}</h3>
-						<p>#{oauth_problem_advice}</p>
-					"
+					next err
 				else
 					req.session.oauthAccessToken = oauthAccessToken
 					req.session.oauthAccessTokenSecret = oauthAccessTokenSecret
