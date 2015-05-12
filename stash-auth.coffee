@@ -2,6 +2,7 @@
 qs = require "querystring"
 {join} = require "path"
 {OAuth} = require "oauth"
+{METHODS} = require "http"
 
 handleError = (err, next)->
 	# https://github.com/ciaranj/node-oauth/issues/250
@@ -43,9 +44,19 @@ module.exports = class StashAuth
 		if req.session.oauthAccessToken
 			
 			req.stash = {}
-			for method in ["get", "put", "delete"]
+			for method in METHODS
 				do (method)=>
-					req.stash[method] = (url, callback)=>
+					method = method.toLowerCase()
+					req.stash[method] = (url, params, callback)=>
+						if typeof params is "function"
+							[params, callback] = [{}, params]
+						if m = url.match /(.*)?(.+=)/
+							more_params = params
+							params = qs.parse m[2]
+							params[k] = v for k, v of more_params
+							url = m[1]
+						if Object.keys(params).length > 0
+							url = "#{url}?#{qs.stringify params}"
 						@consumer[method] "#{@API_URL}/rest/#{url}",
 							req.session.oauthAccessToken
 							req.session.oauthAccessTokenSecret
@@ -54,6 +65,21 @@ module.exports = class StashAuth
 								return callback err if err
 								try data = JSON.parse data catch err
 								callback err, data
+			
+			req.stash.getAll = (url, params, callback)=>
+				if typeof params is "function"
+					[params, callback] = [{}, params]
+				values = []
+				start = 0
+				do getSome = (start)=>
+					params.start = start
+					req.stash.get url, params, (err, data)=>
+						return callback err if err
+						values = values.concat data.values
+						if data.isLastPage
+							callback null, values
+						else
+							getSome data.nextPageStart
 			
 			next()
 		else

@@ -1,6 +1,6 @@
 {
   "name": "stash-auth",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Authorize with Atlassian Stash",
   "keywords": [
     "atlassian",
