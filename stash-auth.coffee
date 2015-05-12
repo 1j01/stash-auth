@@ -4,12 +4,16 @@ qs = require "querystring"
 {OAuth} = require "oauth"
 {METHODS} = require "http"
 
-handleError = (err, next)->
+handleOAuthError = (err, next)->
 	# https://github.com/ciaranj/node-oauth/issues/250
 	if typeof err is "object" and not (err instanceof Error)
-		error = new Error JSON.stringify err
+		data = {}
+		try data[k] = v for k, v of qs.parse err.data
+		msg_json = {}
+		msg_json[k] = v for k, v of data when k isnt "oauth_signature" and k isnt "oauth_signature_base_string"
+		error = new Error "Stash OAuth HTTP status code #{err.statusCode}: #{JSON.stringify msg_json}"
+		error[k] = v for k, v of data
 		error[k] = v for k, v of err
-		try error[k] = v for k, v of qs.parse err.data
 		next error
 	else
 		next err
@@ -84,7 +88,7 @@ module.exports = class StashAuth
 			next()
 		else
 			@consumer.getOAuthRequestToken (err, oauthToken, oauthTokenSecret, results)=>
-				return handleError err, next if err
+				return handleOAuthError err, next if err
 				req.session.oauthRequestToken = oauthToken
 				req.session.oauthRequestTokenSecret = oauthTokenSecret
 				res.redirect "#{@userAuthorizationURL}?oauth_token=#{oauthToken}"
@@ -95,7 +99,7 @@ module.exports = class StashAuth
 			req.session.oauthRequestTokenSecret
 			req.query.oauth_verifier,
 			(err, oauthAccessToken, oauthAccessTokenSecret, results)=>
-				return handleError err, next if err
+				return handleOAuthError err, next if err
 				req.session.oauthAccessToken = oauthAccessToken
 				req.session.oauthAccessTokenSecret = oauthAccessTokenSecret
 				res.redirect req.session.stashAuthReturnURL
