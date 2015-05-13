@@ -2,7 +2,6 @@
 qs = require "querystring"
 {join} = require "path"
 {OAuth} = require "oauth"
-{METHODS} = require "http"
 
 handleOAuthError = (err, next)->
 	# https://github.com/ciaranj/node-oauth/issues/250
@@ -43,47 +42,75 @@ module.exports = class StashAuth
 			)
 
 	auth: (req, res, next)=>
-		
 		req.session.stashAuthReturnURL = req.originalUrl
+		
 		if req.session.oauthAccessToken
 			
-			req.stash = {}
-			for method in METHODS
-				do (method)=>
-					method = method.toLowerCase()
-					req.stash[method] = (url, params, callback)=>
-						if typeof params is "function"
-							[params, callback] = [{}, params]
-						if m = url.match /(.*)?(.+=)/
-							more_params = params
-							params = qs.parse m[2]
-							params[k] = v for k, v of more_params
-							url = m[1]
-						if Object.keys(params).length > 0
-							url = "#{url}?#{qs.stringify params}"
-						@consumer[method] "#{@API_URL}/rest/#{url}",
-							req.session.oauthAccessToken
-							req.session.oauthAccessTokenSecret
-							"application/json"
-							(err, data)=>
-								return callback err if err
-								try data = JSON.parse data catch err
-								callback err, data
-			
-			req.stash.getAll = (url, params, callback)=>
-				if typeof params is "function"
-					[params, callback] = [{}, params]
-				values = []
-				start = 0
-				do getSome = (start)=>
-					params.start = start
-					req.stash.get url, params, (err, data)=>
+			method = (url, params, callback)=>
+				if typeof arguments[1] is "function"
+					[params, callback] = [{}, arguments[1]]
+				
+				if m = url.match /(.*)?(.+=)/
+					more_params = params
+					params = qs.parse m[2]
+					params[k] = v for k, v of more_params
+					url = m[1]
+				
+				if Object.keys(params).length > 0
+					url = "#{url}?#{qs.stringify params}"
+				
+				unless url.match /^https?:\/\//
+					url = "#{@API_URL}/rest/#{url}"
+				
+				[
+					url
+					params
+					(err, data)=>
 						return callback err if err
-						values = values.concat data.values
-						if data.isLastPage
-							callback null, values
-						else
-							getSome data.nextPageStart
+						unless typeof data is "object"
+							try data = JSON.parse data catch err
+						callback err, data
+					req.session.oauthAccessToken
+					req.session.oauthAccessTokenSecret
+				]
+			
+			req.stash =
+				get: (url, params, callback)=>
+					[url, params, callback, access, access_secret] = method url, params, callback
+					@consumer.get url,
+						access, access_secret
+						"application/json"
+						callback
+				# post: (url, params, callback)=>
+				# 	[url, params, callback] = method url, params, callback
+				# 	@consumer.post url,
+				# 		access, access_secret
+				# 		body, content_type
+				# 		callback
+				# put: (url, params, callback)=>
+				# 	[url, params, callback] = method url, params, callback
+				# 	@consumer.put url,
+				# 		access, access_secret
+				# 		body, content_type
+				# 		callback
+				delete: (url, params, callback)=>
+					[url, params, callback] = method url, params, callback
+					@consumer.delete url,
+						access, access_secret
+						callback
+				getAll: (url, params, callback)=>
+					[url, params, callback] = method url, params, callback
+					values = []
+					start = 0
+					do getSome = (start)=>
+						params.start = start
+						req.stash.get url, params, (err, data)=>
+							return callback err if err
+							values = values.concat data.values
+							if data.isLastPage
+								callback null, values
+							else
+								getSome data.nextPageStart
 			
 			next()
 		else

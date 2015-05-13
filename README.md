@@ -3,7 +3,7 @@
 
 Middleware helper
 to authorize with [Stash](https://www.atlassian.com/software/stash) (via OAuth)
-and easily access Stash's [REST APIs](https://developer.atlassian.com/stash/docs/latest/reference/rest-api.html)
+and easily access [Stash's REST APIs](https://developer.atlassian.com/stash/docs/latest/reference/rest-api.html)
 
 
 ## Install
@@ -26,19 +26,21 @@ var stash = new StashAuth(
 app.use("/stash/auth-callback", stash.authCallback);
 ```
 
-The stash.auth middleware will authorize with Stash before
-redirecting back to the original URL (through the auth callback route)
-If a user is already authorized, it invokes the next middleware,
+The `stash.auth` middleware will authorize with Stash
+before redirecting back to the original URL
+(through the auth callback route)
+If a user is already authorized,
+it invokes the next middleware,
 where you have access to `req.stash`
 
 ```js
-app.use("/commits/:project/:repo/", stash.auth, function (req, res) {
+app.use("/commits/:project/:repo/", stash.auth, function (req, res, next) {
 	var project = req.params.project;
 	var repo = req.params.repo;
 	var api_url = "api/1.0/projects/" + project + "/repos/" + repo + "/commits";
 	req.stash.get(api_url, function (err, data) {
 		if (err) {
-			res.send(err);
+			next(err);
 		} else {
 			res.send(data);
 		}
@@ -47,8 +49,11 @@ app.use("/commits/:project/:repo/", stash.auth, function (req, res) {
 ```
 
 There are methods on `req.stash`
-for each standard HTTP method
-(`require("http").METHODS`)
+corresponding to HTTP methods
+supported by [sladey/node-oauth](https://github.com/sladey/node-oauth):
+`get` and `delete`.
+
+POST and PUT are not supported at the moment.
 
 Each method takes the following parameters:
 
