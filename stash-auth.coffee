@@ -40,7 +40,7 @@ module.exports = class StashAuth
 				null
 				privateKeyData
 			)
-
+	
 	auth: (req, res, next)=>
 		req.session.stashAuthReturnURL = req.originalUrl
 		
@@ -66,10 +66,10 @@ module.exports = class StashAuth
 					url
 					params
 					(err, data)=>
-						return callback err if err
+						return handleOAuthError err, callback if err
 						unless typeof data is "object"
-							try data = JSON.parse data catch err
-						callback err, data
+							try data = JSON.parse data catch json_err
+						callback json_err, data
 					req.session.oauthAccessToken
 					req.session.oauthAccessTokenSecret
 				]
@@ -94,7 +94,7 @@ module.exports = class StashAuth
 				# 		body, content_type
 				# 		callback
 				delete: (url, params, callback)=>
-					[url, params, callback] = method url, params, callback
+					[url, params, callback, access, access_secret] = method url, params, callback
 					@consumer.delete url,
 						access, access_secret
 						callback
