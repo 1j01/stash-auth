@@ -7,7 +7,11 @@ handleOAuthError = (err, next)->
 	# https://github.com/ciaranj/node-oauth/issues/250
 	if typeof err is "object" and not (err instanceof Error)
 		data = {}
-		try data[k] = v for k, v of qs.parse err.data
+		if err.data
+			if err.data.match? "<html>"
+				data.html = err.data
+			else
+				try data[k] = v for k, v of qs.parse err.data
 		msg_json = {}
 		msg_json[k] = v for k, v of data when k isnt "oauth_signature" and k isnt "oauth_signature_base_string"
 		error = new Error "Stash OAuth HTTP status code #{err.statusCode}: #{JSON.stringify msg_json}"
@@ -67,7 +71,7 @@ module.exports = class StashAuth
 					params
 					(err, data)=>
 						return handleOAuthError err, callback if err
-						unless typeof data is "object"
+						unless data is "" or typeof data is "object"
 							try data = JSON.parse data catch json_err
 						callback json_err, data
 					req.session.oauthAccessToken
@@ -81,22 +85,23 @@ module.exports = class StashAuth
 						access, access_secret
 						"application/json"
 						callback
-				# post: (url, params, callback)=>
-				# 	[url, params, callback] = method url, params, callback
-				# 	@consumer.post url,
-				# 		access, access_secret
-				# 		body, content_type
-				# 		callback
-				# put: (url, params, callback)=>
-				# 	[url, params, callback] = method url, params, callback
-				# 	@consumer.put url,
-				# 		access, access_secret
-				# 		body, content_type
-				# 		callback
+				post: (url, params, callback)=>
+					[url, params, callback, access, access_secret] = method url, params, callback
+					@consumer.post url,
+						access, access_secret
+						"{}", "application/json"
+						callback
+				put: (url, params, callback)=>
+					[url, params, callback, access, access_secret] = method url, params, callback
+					@consumer.put url,
+						access, access_secret
+						"{}", "application/json"
+						callback
 				delete: (url, params, callback)=>
 					[url, params, callback, access, access_secret] = method url, params, callback
 					@consumer.delete url,
 						access, access_secret
+						"{}", "application/json"
 						callback
 				getAll: (url, params, callback)=>
 					[url, params, callback] = method url, params, callback

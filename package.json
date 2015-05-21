@@ -1,10 +1,11 @@
 {
   "name": "stash-auth",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Authorize with Atlassian Stash",
   "keywords": [
     "atlassian",
     "stash",
+    "api",
     "oauth",
     "auth",
     "authorize",
@@ -28,7 +29,7 @@
     "coffee-script": "~1.9.0"
   },
   "dependencies": {
-    "oauth": "git+https://github.com/sladey/node-oauth.git#5305d9851109a9014d06cb81faad57ebde841ff9"
+    "oauth": "git+https://github.com/1j01/node-oauth.git#cbf38c9e8b745031ee965ed797b44dd42c3f9ec7"
   },
   "scripts": {
     "prepublish": "coffee -c -o lib/ stash-auth.coffee"

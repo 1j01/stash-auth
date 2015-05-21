@@ -50,10 +50,8 @@ app.use("/commits/:project/:repo/", stash.auth, function (req, res, next) {
 
 There are methods on `req.stash`
 corresponding to HTTP methods
-supported by [sladey/node-oauth](https://github.com/sladey/node-oauth):
-`get` and `delete`.
-
-POST and PUT are not supported at the moment.
+supported by [1j01/node-oauth](https://github.com/1j01/node-oauth):
+`get`, `post`, `put` and `delete`.
 
 Each method takes the following parameters:
 
