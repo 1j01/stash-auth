@@ -54,7 +54,7 @@ module.exports = class StashAuth
 				if typeof arguments[1] is "function"
 					[params, callback] = [{}, arguments[1]]
 				
-				if m = url.match /(.*)?(.+=)/
+				if m = url.match /^(.*)\?(.+)$/
 					more_params = params
 					params = qs.parse m[2]
 					params[k] = v for k, v of more_params

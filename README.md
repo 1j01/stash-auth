@@ -55,9 +55,12 @@ supported by [1j01/node-oauth](https://github.com/1j01/node-oauth):
 
 Each method takes the following parameters:
 
-- **url**: `String`, under `/rest/`
-- **params**: _optional_ `Object`, added as a query string to the URL
-- **callback**: `function(err, items){ ... }`
+- **url**: `String`, under `STASH_API_URL/rest/`
+- **params**: _optional_ `Object`, adds parameters to the query string of the URL
+- **callback**: `function(err, data){ ... }` where `data` is the parsed JSON
+
+You can pass parameters through the `url`, or with `params`, or you can mix the two,
+e.g. `req.stash.get("api/1.0/quux?foo=1", {bar: 2})`
 
 Additionally there is a `getAll` method,
 which will try to fetch every item from every page
